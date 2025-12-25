@@ -32,6 +32,9 @@ SKeylogger is a simple keylogger. I had previously been using a few other open s
 ## STOPPING
 1. You have a few options here but I like the command `pkill -f skeylogger`  short and sweet and to the point.
 
+## TROUBLESHOOTING
+1. If you don't see anything in the logfile, you probably have the incorrect event## being watched by skeylogger. Try a different one until you start seeing data in the logfile.
+   
 ### NOTE: THIS HAS BEEN TESTED ON UBUNTU 24.04 (NOT WAYLAND - PROB WILL NOT WORK ON THAT)
 
 

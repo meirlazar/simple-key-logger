@@ -6,7 +6,7 @@ OBJS := skeylogger.o key_util.o options.o config.o
 all: $(BIN_NAME)
 
 $(BIN_NAME): $(OBJS)
-	gcc $(CFLAGS) $(OBJS) -o $(BIN_NAME)
+	gcc $(CFLAGS) $(OBJS) -o $(BIN_NAME) -lX11
 
 clean:
 	rm -f *.o $(BIN_NAME)

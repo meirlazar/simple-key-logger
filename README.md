@@ -1,4 +1,4 @@
-SKeylogger
+Simple Key Logger
 ==========
 
 *** I AM NOT RESPONSIBLE FOR ANYONE USING THIS SOFTWARE IN ANY ILLEGAL/UNETHICAL MANNER, IT IS PURELY FOR EDUCATION/INFORMATIONAL PURPOSES. USE AT YOUR OWN RISK. DON'T DO ANYTHING ILLEGAL OR STUPID ***
@@ -8,14 +8,14 @@ SKeylogger was a simple keylogger. You'd get a log of keystrokes with no context
 
 <img width="1845" height="588" alt="image" src="https://github.com/user-attachments/assets/69e6c4ca-6b35-4be9-96e1-a917e2a4bfc9" />
 
-## BUILD
+## BUILD THE LOGGER 
 
-1. Clone the repo `git clone https://github.com/gsingh93/simple-key-logger.git`
+1. Clone the repo ``https://github.com/meirlazar/simple-key-logger.git``
 2. `cd simple-key-logger`
 3. `make`
    
 ------------------------------------------------------------------------
-## RUNNING 
+## RUN THE LOGGER 
 1. Get the keyboard device input `cat /proc/bus/input/devices`
 2. Look for your keyboard input device, it should have a line in the config that looks like this `H: Handlers=sysrq kbd event## leds`
 3. The event## will be event with 2 digits after it, that is what we need.
@@ -32,11 +32,11 @@ SKeylogger was a simple keylogger. You'd get a log of keystrokes with no context
  
    If the log was not written to in the last 5 seconds, it will create a newline with the timestamp and active window prepended and the keystrokes captured.
 
-## STOPPING
+## STOPPING/KILLING THE LOGGER
 1. You have a few options here but I like the command `pkill -f skeylogger`  short and sweet and to the point.
 
 ## TROUBLESHOOTING
-1. If you don't see anything in the logfile, you probably have the incorrect event## being watched by skeylogger. Try a different one until you start seeing data in the logfile.
+1. If you don't see anything in the log after running the logger and smashing some keys on your keyboard, you probably have the wrong event## being watched by skeylogger. Try a different one, until you start seeing data in the log or until you have to check in with your parole officer. 
    
 ### NOTE: THIS HAS BEEN TESTED ON UBUNTU 24.04 (NOT WAYLAND - PROB WILL NOT WORK ON THAT)
 
